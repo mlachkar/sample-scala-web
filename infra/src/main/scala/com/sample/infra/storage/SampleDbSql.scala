@@ -26,13 +26,13 @@ class SampleDbSql(conf: DbConf) extends SampleDb[IO] {
     UserTable.insert(user).run.transact(xa).map(_ => user)
 
   private def flywayBuilder(conf: DbConf): Flyway = {
-    val flyway = new Flyway()
-    flyway.setLocations("classpath:sql")
     val (url, user, pass) = conf match {
       case c: H2 => (c.url, null, null)
       case c: PostgreSQL => (c.url, c.user, c.pass)
     }
-    flyway.setDataSource(url, user, pass)
-    flyway
+    Flyway.configure()
+      .dataSource(url, user, pass)
+      .locations("classpath:sql")
+      .load()
   }
 }

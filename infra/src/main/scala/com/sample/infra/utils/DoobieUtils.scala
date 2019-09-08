@@ -1,13 +1,17 @@
 package com.sample.infra.utils
 
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import com.sample.core.domain.User
 import com.sample.infra.storage.{DbConf, H2, PostgreSQL}
 import com.sample.lib.scalautils.Extensions._
 import doobie._
 import doobie.implicits._
 
+import scala.concurrent.ExecutionContext
+
 object DoobieUtils {
+  private implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+
   def transactor(conf: DbConf): doobie.Transactor[IO] = conf match {
     case c: H2 => Transactor.fromDriverManager[IO](c.driver, c.url, "", "")
     case c: PostgreSQL => Transactor.fromDriverManager[IO]("org.postgresql.Driver", c.url, c.user, c.pass)
@@ -20,7 +24,7 @@ object DoobieUtils {
     fr"insert into " ++ Fragment.const(table) ++ fr"(" ++ Fragment.const(fields.mkString(", ")) ++ fr") values (" ++ values ++ fr")"
 
   object Mappings {
-    implicit val userIdMeta: Meta[User.Id] = Meta[String].xmap(User.Id.from(_).get, _.value)
+    implicit val userIdMeta: Meta[User.Id] = Meta[String].timap(User.Id.from(_).get)(_.value)
   }
 
 }

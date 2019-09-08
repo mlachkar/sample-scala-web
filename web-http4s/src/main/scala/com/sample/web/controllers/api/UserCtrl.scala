@@ -13,7 +13,7 @@ import scala.language.higherKinds
 
 // TODO: test controllers
 class UserCtrl[F[_] : Effect](db: SampleDb[F]) extends Http4sDsl[F] {
-  val service: HttpService[F] = HttpService[F] {
+  val service: HttpRoutes[F] =  HttpRoutes.of[F] {
     case GET -> Root => db.findUsers().flatMap(users => Ok(users.asJson))
   }
 }
